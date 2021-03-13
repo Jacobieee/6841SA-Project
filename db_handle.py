@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-SQL_dir = os.getcwd() + 'Keylogger.db'
+SQL_dir = os.getcwd() + '/Keylogger.db'
 
 
 def SQLquery(query, params, one=False):

